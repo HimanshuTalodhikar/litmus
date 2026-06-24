@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FR Detail — Product Copilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/portal.css">
+</head>
+<body>
+
+<div class="portal-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>Product Copilot</h1>
+      <span>Feature Intelligence</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a href="/index.html" class="nav-link">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Dashboard
+      </a>
+      <a href="/feature-requests.html" class="nav-link">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Feature Requests
+      </a>
+      <div class="nav-section-label">Knowledge</div>
+      <a href="/ingest.html" class="nav-link">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        Ingest Docs
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      Slack Copilot &copy; 2026
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+          <a href="/feature-requests.html" class="btn btn-ghost btn-sm" style="padding:5px 8px;">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:15px;height:15px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            Back
+          </a>
+          <h2 id="fr-heading">Loading...</h2>
+          <span id="fr-status"></span>
+        </div>
+        <p id="fr-meta" style="margin-top:4px;"></p>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button id="implement-btn" class="btn btn-primary btn-sm" onclick="generatePlan()" style="display:none;">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:15px;height:15px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          Implement
+        </button>
+        <button id="download-pdf-btn" class="btn btn-outline btn-sm" onclick="downloadPDF()" style="display:none;">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:15px;height:15px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Download PDF
+        </button>
+      </div>
+    </div>
+
+    <div class="page-body" id="detail-body" style="display:none;">
+      <div class="detail-grid">
+
+        <!-- Left: Main content -->
+        <div>
+          <!-- Raw Request -->
+          <div class="card" style="margin-bottom:20px;">
+            <div class="card-header"><h3>Original Request</h3></div>
+            <div class="card-body">
+              <p id="fr-raw" style="margin:0; font-size:14px; line-height:1.7; color:var(--text);"></p>
+            </div>
+          </div>
+
+          <!-- Enriched Request -->
+          <div class="card" id="enriched-card" style="margin-bottom:20px; display:none;">
+            <div class="card-header"><h3>AI Summary</h3></div>
+            <div class="card-body">
+              <p id="fr-enriched" style="margin:0; font-size:14px; line-height:1.7; color:var(--text);"></p>
+            </div>
+          </div>
+
+          <!-- Jira Ticket -->
+          <div class="card" id="jira-card" style="margin-bottom:20px; display:none;">
+            <div class="card-header">
+              <h3>Jira Ticket</h3>
+            </div>
+            <div class="card-body" style="display:flex; align-items:center; gap:14px;">
+              <span id="jira-key" class="badge badge-indigo" style="font-size:13px; padding:5px 14px;"></span>
+              <a id="jira-url" href="#" target="_blank" class="btn btn-outline btn-sm">
+                Open in Jira
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:13px;height:13px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- Requester info -->
+          <div class="card">
+            <div class="card-header"><h3>Details</h3></div>
+            <div class="card-body">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                <div>
+                  <div class="stat-label">Requester</div>
+                  <div id="fr-requester" style="font-size:14px; font-weight:500; margin-top:2px;">—</div>
+                </div>
+                <div>
+                  <div class="stat-label">Slack Channel</div>
+                  <div id="fr-channel" style="font-size:14px; font-weight:500; margin-top:2px;">—</div>
+                </div>
+                <div>
+                  <div class="stat-label">Created</div>
+                  <div id="fr-created" style="font-size:14px; font-weight:500; margin-top:2px;">—</div>
+                </div>
+                <div>
+                  <div class="stat-label">Last Updated</div>
+                  <div id="fr-updated" style="font-size:14px; font-weight:500; margin-top:2px;">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Implementation Plan -->
+        <div class="card" id="impl-card" style="margin-bottom:20px; display:none;">
+          <div class="card-header">
+            <h3>Implementation Plan</h3>
+            <span id="impl-status-badge"></span>
+          </div>
+          <div class="card-body" id="impl-body">
+            <div id="impl-loading" style="display:none; align-items:center; gap:10px; color:var(--text-muted); font-size:13px;">
+              <span class="spinner" style="width:16px;height:16px;border-width:2px;"></span>
+              Generating plan with Claude Opus...
+            </div>
+            <div id="impl-ready" style="display:none;">
+              <p id="impl-msg" style="margin:0 0 12px; font-size:13px; color:var(--text-muted);"></p>
+              <div id="impl-links"></div>
+            </div>
+            <div id="impl-error" style="display:none;">
+              <p style="margin:0; font-size:13px; color:var(--danger);" id="impl-error-msg"></p>
+              <button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="generatePlan()">Retry</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Score + RICE -->
+        <div class="detail-sidebar">
+          <!-- Priority Score -->
+          <div class="card">
+            <div class="score-display">
+              <div id="fr-score" class="score-big">—</div>
+              <div class="score-label">Priority Score</div>
+              <div id="fr-score-sub" style="font-size:12px; color:var(--text-muted); margin-top:6px;">RICE Score</div>
+            </div>
+          </div>
+
+          <!-- RICE Breakdown -->
+          <div class="card">
+            <div class="card-header"><h3>RICE Breakdown</h3></div>
+            <div class="card-body">
+              <div style="display:flex; flex-direction:column; gap:14px;">
+                <div class="rice-item">
+                  <div class="rice-label">Reach</div>
+                  <div id="rice-reach" class="rice-value">—</div>
+                  <div class="rice-sub">users impacted</div>
+                </div>
+                <div class="rice-item">
+                  <div class="rice-label">Impact</div>
+                  <div id="rice-impact" class="rice-value">—</div>
+                  <div class="rice-sub">% goal conversion lift</div>
+                </div>
+                <div class="rice-item">
+                  <div class="rice-label">Confidence</div>
+                  <div id="rice-confidence" class="rice-value">—</div>
+                  <div class="rice-sub">% certainty</div>
+                </div>
+                <div class="rice-item">
+                  <div class="rice-label">Effort</div>
+                  <div id="rice-effort" class="rice-value">—</div>
+                  <div class="rice-sub">person-months</div>
+                </div>
+              </div>
+              <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Total</span>
+                <span id="rice-total" style="font-size:18px; font-weight:800; color:var(--text);">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div id="loading-state" style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:400px; gap:16px;">
+      <span class="spinner" style="width:32px; height:32px; border-width:3px;"></span>
+      <p style="color:var(--text-muted); font-size:14px;">Loading feature request...</p>
+    </div>
+
+  </main>
+</div>
+
+<style>
+.rice-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rice-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.rice-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+}
+.rice-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+</style>
+
+<script src="/static/js/portal.js"></script>
+<script>
+let frData = null;
+
+function getFRId() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('id');
+}
+
+async function loadFR() {
+  const id = getFRId();
+  if (!id) {
+    showError('No feature request ID provided.');
+    return;
+  }
+
+  try {
+    frData = await apiFetch(`/api/v1/feature-requests/${id}`);
+    renderFR(frData);
+  } catch (e) {
+    showError('Failed to load: ' + e.message);
+  }
+}
+
+let _pollTimer = null;
+
+function renderFR(fr) {
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('detail-body').style.display = 'block';
+  document.getElementById('download-pdf-btn').style.display = 'inline-flex';
+  document.getElementById('implement-btn').style.display = 'inline-flex';
+
+  // Heading
+  document.getElementById('fr-heading').textContent = `FR-${fr.fr_number}`;
+  document.getElementById('fr-status').innerHTML = statusBadge(fr.status);
+  document.getElementById('fr-meta').textContent = `Priority score ${fr.priority_score != null ? fr.priority_score.toFixed(1) : '—'} — ${formatDate(fr.created_at)}`;
+
+  // Implementation plan card
+  renderImplStatus(fr);
+
+  // Raw text
+  document.getElementById('fr-raw').textContent = fr.raw_text || '—';
+
+  // Enriched text
+  if (fr.enriched_text) {
+    document.getElementById('enriched-card').style.display = 'block';
+    document.getElementById('fr-enriched').textContent = fr.enriched_text;
+  }
+
+  // Jira
+  if (fr.jira_issue_key) {
+    document.getElementById('jira-card').style.display = 'block';
+    document.getElementById('jira-key').textContent = fr.jira_issue_key;
+    const urlEl = document.getElementById('jira-url');
+    urlEl.href = fr.jira_issue_url || '#';
+    urlEl.style.display = fr.jira_issue_url ? 'inline-flex' : 'none';
+  }
+
+  // Details
+  document.getElementById('fr-requester').textContent = fr.requester_id || '—';
+  document.getElementById('fr-channel').textContent = fr.slack_channel_id || '—';
+  document.getElementById('fr-created').textContent = formatDate(fr.created_at);
+  document.getElementById('fr-updated').textContent = fr.updated_at ? formatDate(fr.updated_at) : '—';
+
+  // Score
+  const score = fr.priority_score;
+  if (score != null) {
+    document.getElementById('fr-score').textContent = score.toFixed(1);
+    const scoreColor = score >= 60 ? '#ef4444' : score >= 40 ? '#f59e0b' : '#10b981';
+    document.getElementById('fr-score').style.color = scoreColor;
+  }
+
+  // RICE
+  const rice = fr.rice_scores || {};
+  document.getElementById('rice-reach').textContent = rice.reach ?? '—';
+  document.getElementById('rice-impact').textContent = rice.impact != null ? `${rice.impact}%` : '—';
+  document.getElementById('rice-confidence').textContent = rice.confidence != null ? `${rice.confidence}%` : '—';
+  document.getElementById('rice-effort').textContent = rice.effort != null ? `${rice.effort} mo` : '—';
+
+  if (score != null) {
+    document.getElementById('rice-total').textContent = score.toFixed(1);
+  }
+
+  document.title = `FR-${fr.fr_number} — Product Copilot`;
+}
+
+function showError(msg) {
+  document.getElementById('loading-state').style.display = 'none';
+  showToast(msg, 'error');
+}
+
+function downloadPDF() {
+  if (!frData) return;
+  const id = getFRId();
+  const url = `${API}/api/v1/feature-requests/${id}/pdf`;
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `FR-${frData.fr_number}-feature-request.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  showToast('Downloading PDF...', 'info');
+}
+
+function implStatusLabel(status) {
+  return {
+    not_started: ['badge-gray', 'Not Started'],
+    generating:  ['badge-purple', 'Generating...'],
+    generated:   ['badge-green', 'Generated'],
+    failed:      ['badge-red',   'Failed'],
+  }[status] || ['badge-gray', status];
+}
+
+function renderImplStatus(fr) {
+  document.getElementById('impl-card').style.display = 'block';
+  const [badgeCls, badgeLabel] = implStatusLabel(fr.impl_status || 'not_started');
+  document.getElementById('impl-status-badge').innerHTML =
+    `<span class="badge ${badgeCls}">${badgeLabel}</span>`;
+
+  ['impl-loading', 'impl-ready', 'impl-error'].forEach(id =>
+    document.getElementById(id).style.display = 'none'
+  );
+
+  if (fr.impl_status === 'generating') {
+    document.getElementById('impl-loading').style.display = 'flex';
+    startPolling();
+  } else if (fr.impl_status === 'generated') {
+    document.getElementById('impl-ready').style.display = 'block';
+    const count = fr.phase_count || 0;
+    document.getElementById('impl-msg').textContent =
+      `Plan generated — ${count} phase${count !== 1 ? 's' : ''} created.`;
+    const links = document.getElementById('impl-links');
+    let linksHtml = '';
+    if (fr.plan_path) {
+      linksHtml += `<a href="/impl/${fr.plan_path}" target="_blank" class="btn btn-outline btn-sm" style="display:inline-flex; align-items:center; gap:6px; margin-bottom:6px; border-color:var(--primary); color:var(--primary);">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:13px;height:13px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Download Plan (${fr.plan_path})
+      </a>`;
+    }
+    if (fr.phase_paths && fr.phase_paths.length) {
+      fr.phase_paths.forEach(p => {
+        linksHtml += `<a href="/phases/${p}" target="_blank" class="btn btn-outline btn-sm" style="display:inline-flex; align-items:center; gap:6px; margin-bottom:6px;">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:13px;height:13px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          ${p}
+        </a>`;
+      });
+    }
+    document.getElementById('impl-links').innerHTML = linksHtml;
+  } else if (fr.impl_status === 'failed') {
+    document.getElementById('impl-error').style.display = 'block';
+    document.getElementById('impl-error-msg').textContent = fr.impl_error || 'Plan generation failed.';
+  } else {
+    // not_started
+    document.getElementById('impl-ready').style.display = 'block';
+    document.getElementById('impl-msg').textContent =
+      'No plan yet. Click "Implement" to generate one with Claude Opus.';
+    document.getElementById('impl-links').innerHTML = '';
+  }
+}
+
+async function generatePlan() {
+  if (!frData) return;
+  const id = getFRId();
+  try {
+    const res = await apiFetch(`/api/v1/feature-requests/${id}/generate-plan`, {method: 'POST'});
+    showToast('Plan generation started...', 'info');
+    startPolling();
+    renderImplStatus({ impl_status: 'generating', phase_count: null, phase_paths: null });
+  } catch (e) {
+    showToast('Failed to start: ' + e.message, 'error');
+  }
+}
+
+function startPolling() {
+  if (_pollTimer) return;
+  _pollTimer = setInterval(async () => {
+    if (!frData) return;
+    try {
+      const plan = await apiFetch(`/api/v1/feature-requests/${getFRId()}/plan`);
+      frData = { ...frData, ...plan };
+      if (plan.impl_status !== 'generating') {
+        clearInterval(_pollTimer);
+        _pollTimer = null;
+      }
+      renderImplStatus(plan);
+    } catch (e) {
+      // silently ignore polling errors
+    }
+  }, 3000);
+}
+
+loadFR();
+</script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feature Requests — Product Copilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/portal.css">
+</head>
+<body>
+
+<div class="portal-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>Product Copilot</h1>
+      <span>Feature Intelligence</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a href="/index.html" class="nav-link">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Dashboard
+      </a>
+      <a href="/feature-requests.html" class="nav-link">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Feature Requests
+      </a>
+      <div class="nav-section-label">Knowledge</div>
+      <a href="/ingest.html" class="nav-link">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        Ingest Docs
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      Slack Copilot &copy; 2026
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h2>Feature Requests</h2>
+        <p id="fr-count-p">Loading...</p>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- Filters + Search -->
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:20px;">
+        <div class="search-bar">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" id="search-input" placeholder="Search feature requests...">
+        </div>
+        <div class="filter-chips" id="status-filters">
+          <button class="chip active" data-status="all">All</button>
+          <button class="chip" data-status="requested">Requested</button>
+          <button class="chip" data-status="under_review">Under Review</button>
+          <button class="chip" data-status="accepted">Accepted</button>
+          <button class="chip" data-status="backlog">Backlog</button>
+          <button class="chip" data-status="rejected">Rejected</button>
+        </div>
+        <select id="sort-select" style="margin-left:auto; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:13px; font-family:inherit; color:var(--text); background:var(--card); cursor:pointer;">
+          <option value="newest">Newest First</option>
+          <option value="priority">Priority Score</option>
+          <option value="fr">FR Number</option>
+        </select>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sort('fr')">FR #</th>
+              <th>Request</th>
+              <th onclick="sort('priority')">Priority</th>
+              <th onclick="sort('status')">Status</th>
+              <th>Jira</th>
+              <th onclick="sort('newest')">Created</th>
+            </tr>
+          </thead>
+          <tbody id="fr-tbody">
+            <tr><td colspan="6" class="loading-overlay"><span class="spinner"></span> Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="pagination"></div>
+
+    </div>
+  </main>
+</div>
+
+<script src="/static/js/portal.js"></script>
+<script>
+const PAGE_SIZE = 20;
+let allFRs = [];
+let filteredFRs = [];
+let currentPage = 1;
+let currentStatus = 'all';
+let currentSort = 'newest';
+let searchQuery = '';
+
+async function loadFRs() {
+  try {
+    allFRs = await apiFetch('/api/v1/feature-requests?limit=100');
+    applyFilters();
+  } catch (e) {
+    showToast('Failed to load: ' + e.message, 'error');
+  }
+}
+
+function applyFilters() {
+  filteredFRs = allFRs.filter(fr => {
+    if (currentStatus !== 'all' && fr.status !== currentStatus) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const raw = (fr.raw_text || '').toLowerCase();
+      const enriched = (fr.enriched_text || '').toLowerCase();
+      if (!raw.includes(q) && !enriched.includes(q)) return false;
+    }
+    return true;
+  });
+
+  // Sort
+  filteredFRs.sort((a, b) => {
+    if (currentSort === 'priority') return (b.priority_score || 0) - (a.priority_score || 0);
+    if (currentSort === 'fr') return a.fr_number - b.fr_number;
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+
+  currentPage = 1;
+  document.getElementById('fr-count-p').textContent = `${filteredFRs.length} feature request${filteredFRs.length !== 1 ? 's' : ''}`;
+  renderPage();
+}
+
+function renderPage() {
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page = filteredFRs.slice(start, start + PAGE_SIZE);
+  const tbody = document.getElementById('fr-tbody');
+
+  if (!page.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><h3>No results</h3><p>Try adjusting your filters or search query.</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = page.map(fr => {
+    const raw = fr.raw_text || '';
+    const truncated = raw.length > 80 ? raw.slice(0, 80) + '…' : raw;
+    const jira = fr.jira_issue_key
+      ? `<a href="${fr.jira_issue_url}" target="_blank" class="badge badge-indigo" style="text-decoration:none">${fr.jira_issue_key}</a>`
+      : `<span class="td-muted">—</span>`;
+    return `<tr onclick="window.location='/feature-request-detail.html?id=${fr.id}'">
+      <td class="td-mono">FR-${fr.fr_number}</td>
+      <td>${truncated}</td>
+      <td>${priorityDisplay(fr.priority_score)}</td>
+      <td>${statusBadge(fr.status)}</td>
+      <td>${jira}</td>
+      <td class="td-muted">${formatDate(fr.created_at)}</td>
+    </tr>`;
+  }).join('');
+
+  renderPagination();
+}
+
+function renderPagination() {
+  const total = Math.ceil(filteredFRs.length / PAGE_SIZE);
+  const el = document.getElementById('pagination');
+  if (total <= 1) { el.innerHTML = ''; return; }
+
+  let html = `<button ${currentPage === 1 ? 'disabled' : ''} onclick="goPage(${currentPage - 1})">&larr;</button>`;
+  for (let i = 1; i <= total; i++) {
+    if (i === 1 || i === total || (i >= currentPage - 2 && i <= currentPage + 2)) {
+      html += `<button class="${i === currentPage ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
+    } else if (i === currentPage - 3 || i === currentPage + 3) {
+      html += `<span style="padding:0 4px;color:var(--text-muted)">…</span>`;
+    }
+  }
+  html += `<button ${currentPage === total ? 'disabled' : ''} onclick="goPage(${currentPage + 1})">&rarr;</button>`;
+  el.innerHTML = html;
+}
+
+function goPage(n) { currentPage = n; renderPage(); }
+function sort(field) {
+  currentSort = field;
+  applyFilters();
+}
+
+// Filter chips
+document.querySelectorAll('#status-filters .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#status-filters .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    currentStatus = chip.dataset.status;
+    applyFilters();
+  });
+});
+
+// Search
+document.getElementById('search-input').addEventListener('input', debounce(e => {
+  searchQuery = e.target.value;
+  applyFilters();
+}, 250));
+
+// Sort
+document.getElementById('sort-select').addEventListener('change', e => {
+  currentSort = e.target.value;
+  applyFilters();
+});
+
+function debounce(fn, delay) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };
+}
+
+loadFRs();
+</script>
+</body>
+</html>

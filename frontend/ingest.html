@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ingest Docs — Product Copilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/portal.css">
+</head>
+<body>
+
+<div class="portal-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>Product Copilot</h1>
+      <span>Feature Intelligence</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a href="/index.html" class="nav-link">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Dashboard
+      </a>
+      <a href="/feature-requests.html" class="nav-link">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Feature Requests
+      </a>
+      <div class="nav-section-label">Knowledge</div>
+      <a href="/ingest.html" class="nav-link">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        Ingest Docs
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      Slack Copilot &copy; 2026
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h2>Ingest Docs</h2>
+        <p id="stats-summary">Loading knowledge base stats...</p>
+      </div>
+    </div>
+
+    <div class="page-body">
+      <div class="ingest-layout">
+
+        <!-- Stats row -->
+        <div class="stats-grid" id="stats-grid" style="margin-bottom:24px;">
+          <div class="stat-card">
+            <div class="stat-label">Total Chunks</div>
+            <div class="stat-value" id="stat-chunks">—</div>
+            <div class="stat-sub">in vector store</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-label">Products / Sources</div>
+            <div class="stat-value" id="stat-sources">—</div>
+            <div class="stat-sub">ingested sources</div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-label">Last Ingest</div>
+            <div class="stat-value" id="stat-last" style="font-size:22px;">—</div>
+            <div class="stat-sub">most recent</div>
+          </div>
+        </div>
+
+        <!-- Ingest form -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Ingest Product Documentation</h3>
+          </div>
+          <div class="card-body">
+            <form id="ingest-form" onsubmit="handleIngest(event)">
+              <div style="margin-bottom:16px;">
+                <label for="source-input" style="display:block; font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">
+                  Product / Source Name
+                </label>
+                <input
+                  type="text"
+                  id="source-input"
+                  placeholder="e.g. Slack Copilot, Payments Module, Mobile App..."
+                  required
+                  style="width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:8px; font-size:14px; font-family:inherit; color:var(--text); background:var(--card); outline:none; transition:border-color 0.15s, box-shadow 0.15s;"
+                  onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 3px rgba(99,102,241,0.12)'"
+                  onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none'"
+                >
+              </div>
+
+              <div style="margin-bottom:20px;">
+                <label for="docs-input" style="display:block; font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">
+                  Documentation Content
+                </label>
+                <textarea
+                  id="docs-input"
+                  class="ingest-textarea"
+                  placeholder="Paste your product documentation here...
+
+Supports markdown formatting. The content will be:
+  • Split into semantic chunks automatically
+  • Embedded with AI and stored in the vector database
+  • Used as context when evaluating new feature requests
+
+Tip: Include product descriptions, existing features, roadmap items, and FAQ sections for best results."
+                  required
+                ></textarea>
+              </div>
+
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+                <div style="font-size:12px; color:var(--text-muted);">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  Content is chunked, embedded, and stored in Qdrant Cloud for RAG retrieval.
+                </div>
+                <button type="submit" id="ingest-btn" class="btn btn-primary btn-lg" style="min-width:160px; justify-content:center;">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:17px;height:17px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                  <span id="ingest-btn-text">Ingest Docs</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Tips card -->
+        <div class="card" style="margin-top:20px;">
+          <div class="card-header"><h3>Tips for Ingestion</h3></div>
+          <div class="card-body">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+              <div>
+                <div style="font-weight:700; font-size:13px; margin-bottom:6px; color:var(--text);">What to include</div>
+                <ul style="margin:0; padding-left:18px; font-size:13px; color:var(--text-muted); line-height:1.8;">
+                  <li>Product descriptions and core value props</li>
+                  <li>Current features and how they work</li>
+                  <li>Roadmap items and planned features</li>
+                  <li>FAQ sections answering common questions</li>
+                  <li>Release notes for recent versions</li>
+                </ul>
+              </div>
+              <div>
+                <div style="font-weight:700; font-size:13px; margin-bottom:6px; color:var(--text);">How it helps</div>
+                <ul style="margin:0; padding-left:18px; font-size:13px; color:var(--text-muted); line-height:1.8;">
+                  <li>Prevents duplicate Jira tickets for existing features</li>
+                  <li>Enables AI to answer FR questions contextually</li>
+                  <li>Ranks features by how well they fit the product vision</li>
+                  <li>Enriches FR summaries with product context</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/static/js/portal.js"></script>
+<script>
+async function loadStats() {
+  try {
+    const stats = await apiFetch('/api/v1/docs/stats');
+    document.getElementById('stat-chunks').textContent = stats.total_chunks ?? 0;
+    document.getElementById('stat-sources').textContent = stats.sources ? stats.sources.length : 0;
+    document.getElementById('stat-last').textContent = stats.last_ingested
+      ? formatDate(stats.last_ingested)
+      : '—';
+    document.getElementById('stats-summary').textContent =
+      `${stats.total_chunks ?? 0} chunks across ${stats.sources ? stats.sources.length : 0} source${stats.sources && stats.sources.length !== 1 ? 's' : ''} in the knowledge base`;
+  } catch (e) {
+    document.getElementById('stats-summary').textContent = 'Could not load stats — is the backend running?';
+    document.getElementById('stat-chunks').textContent = '?';
+    document.getElementById('stat-sources').textContent = '?';
+  }
+}
+
+async function handleIngest(e) {
+  e.preventDefault();
+  const btn = document.getElementById('ingest-btn');
+  const btnText = document.getElementById('ingest-btn-text');
+  const source = document.getElementById('source-input').value.trim();
+  const text = document.getElementById('docs-input').value.trim();
+
+  if (!source || !text) {
+    showToast('Please fill in both the source name and documentation content.', 'error');
+    return;
+  }
+
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner" style="width:15px;height:15px;border-width:2px;"></span> Ingesting...';
+
+  try {
+    const res = await apiFetch('/api/v1/docs/ingest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source, text }),
+    });
+
+    showToast(
+      `Ingested ${res.chunks_ingested} chunk${res.chunks_ingested !== 1 ? 's' : ''} from "${source}"!`,
+      'success'
+    );
+
+    // Clear form
+    document.getElementById('source-input').value = '';
+    document.getElementById('docs-input').value = '';
+
+    // Refresh stats
+    await loadStats();
+
+  } catch (err) {
+    showToast('Ingest failed: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btnText.innerHTML = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:17px;height:17px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg> Ingest Docs`;
+  }
+}
+
+loadStats();
+</script>
+</body>
+</html>

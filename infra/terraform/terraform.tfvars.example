@@ -1,0 +1,10 @@
+# Terraform variables — copy to terraform.tfvars and fill in values
+# DO NOT commit terraform.tfvars to git if it contains real secrets
+
+aws_region   = "us-east-1"
+project_env  = "dev"
+
+# For production, use larger instance classes:
+# db_instance_class    = "db.t3.medium"
+# cache_instance_class = "cache.t3.medium"
+# db_allocated_storage = 100

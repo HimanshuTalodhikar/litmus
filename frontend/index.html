@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Copilot — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/portal.css">
+</head>
+<body>
+
+<div class="portal-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>Product Copilot</h1>
+      <span>Feature Intelligence</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a href="/index.html" class="nav-link">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Dashboard
+      </a>
+      <a href="/feature-requests.html" class="nav-link">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Feature Requests
+      </a>
+      <div class="nav-section-label">Knowledge</div>
+      <a href="/ingest.html" class="nav-link">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        Ingest Docs
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      Slack Copilot &copy; 2026
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h2>Dashboard</h2>
+        <p>Overview of all feature requests</p>
+      </div>
+      <a href="/ingest.html" class="btn btn-primary btn-sm">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        Ingest Docs
+      </a>
+    </div>
+
+    <div class="page-body">
+
+      <!-- Stats -->
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total FRs</div>
+          <div class="stat-value" id="stat-total">—</div>
+          <div class="stat-sub">feature requests</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-label">Avg Priority</div>
+          <div class="stat-value" id="stat-avg">—</div>
+          <div class="stat-sub">rice score</div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-label">With Jira</div>
+          <div class="stat-value" id="stat-jira">—</div>
+          <div class="stat-sub">tickets created</div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-label">This Week</div>
+          <div class="stat-value" id="stat-week">—</div>
+          <div class="stat-sub">new requests</div>
+        </div>
+      </div>
+
+      <!-- Recent FRs -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Recent Feature Requests</h3>
+          <a href="/feature-requests.html" class="btn btn-ghost btn-sm">View all &rarr;</a>
+        </div>
+        <div class="table-wrapper" style="border:none; box-shadow:none;">
+          <table>
+            <thead>
+              <tr>
+                <th>FR #</th>
+                <th>Request</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Jira</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody id="recent-tbody">
+              <tr>
+                <td colspan="6" class="loading-overlay">
+                  <span class="spinner"></span> Loading...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="/static/js/portal.js"></script>
+<script>
+async function loadDashboard() {
+  try {
+    const frs = await apiFetch('/api/v1/feature-requests?limit=100');
+
+    // Stats
+    const total = frs.length;
+    const withJira = frs.filter(f => f.jira_issue_key).length;
+    const scored = frs.filter(f => f.priority_score != null);
+    const avg = scored.length ? (scored.reduce((s, f) => s + f.priority_score, 0) / scored.length).toFixed(1) : '—';
+
+    // This week
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const weekCount = frs.filter(f => new Date(f.created_at) > weekAgo).length;
+
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-avg').textContent = avg;
+    document.getElementById('stat-jira').textContent = withJira;
+    document.getElementById('stat-week').textContent = weekCount;
+
+    // Table
+    const recent = frs.slice(0, 10);
+    const tbody = document.getElementById('recent-tbody');
+
+    if (!recent.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><h3>No feature requests yet</h3><p>Use /fr in Slack to submit one.</p></div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = recent.map(fr => {
+      const raw = fr.raw_text || '';
+      const truncated = raw.length > 70 ? raw.slice(0, 70) + '…' : raw;
+      const jira = fr.jira_issue_key
+        ? `<a href="${fr.jira_issue_url}" target="_blank" class="badge badge-indigo" style="text-decoration:none">${fr.jira_issue_key}</a>`
+        : `<span class="td-muted">—</span>`;
+      return `<tr onclick="window.location='/feature-request-detail.html?id=${fr.id}'">
+        <td class="td-mono">FR-${fr.fr_number}</td>
+        <td>${truncated}</td>
+        <td>${priorityDisplay(fr.priority_score)}</td>
+        <td>${statusBadge(fr.status)}</td>
+        <td>${jira}</td>
+        <td class="td-muted">${timeAgo(fr.created_at)}</td>
+      </tr>`;
+    }).join('');
+
+  } catch (e) {
+    showToast('Failed to load dashboard: ' + e.message, 'error');
+  }
+}
+
+loadDashboard();
+</script>
+</body>
+</html>

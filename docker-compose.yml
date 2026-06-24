@@ -1,0 +1,90 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./impl:/app/impl
+      - ./phases:/app/phases
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=productcopilot
+      - DB_USER=copilot
+      - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=password
+      - REDIS_USE_SSL=false
+      - QDRANT_URL=https://1b7e7174-1aef-4e31-ad5d-7b65e870257a.us-east-1-1.aws.cloud.qdrant.io
+      - QDRANT_API_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIiwic3ViamVjdCI6ImFwaS1rZXk6N2I4YjFlZGYtMmViYy00OTc0LTk5N2MtZTRmNWVlOTExNmQ4In0.J0Alm-KJkg6NPTx3d1A5nbP-iPcCer4gyKqRl1fBYC4
+      - CODERMAX_API_KEY=${CODERMAX_API_KEY:-}
+      - CODERMAX_BASE_URL=${CODERMAX_BASE_URL:-https://api.codemax.pro}
+      - CODERMAX_MODEL=${CODERMAX_MODEL:-claude-sonnet-4-6}
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN:-}
+      - SLACK_SIGNING_SECRET=${SLACK_SIGNING_SECRET:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: copilot
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: productcopilot
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U copilot -d productcopilot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass password
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "password", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    build: .
+    command: python -m app.workers.message_worker
+    volumes:
+      - ./impl:/app/impl
+      - ./phases:/app/phases
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=productcopilot
+      - DB_USER=copilot
+      - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=password
+      - REDIS_USE_SSL=false
+      - QDRANT_URL=https://1b7e7174-1aef-4e31-ad5d-7b65e870257a.us-east-1-1.aws.cloud.qdrant.io
+      - QDRANT_API_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIiwic3ViamVjdCI6ImFwaS1rZXk6N2I4YjFlZGYtMmViYy00OTc0LTk5N2MtZTRmNWVlOTExNmQ4In0.J0Alm-KJkg6NPTx3d1A5nbP-iPcCer4gyKqRl1fBYC4
+      - CODERMAX_API_KEY=${CODERMAX_API_KEY:-}
+      - CODERMAX_BASE_URL=${CODERMAX_BASE_URL:-https://api.codemax.pro}
+      - CODERMAX_MODEL=${CODERMAX_MODEL:-claude-sonnet-4-6}
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN:-}
+      - SLACK_SIGNING_SECRET=${SLACK_SIGNING_SECRET:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
